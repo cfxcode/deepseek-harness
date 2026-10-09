@@ -1,0 +1,19 @@
+- id: llm-deepseek
+  disabled: true
+
+- id: plugin-package-inventory-deepseek
+  disabled: true
+
+- id: llm-pi-ai
+  config:
+    providers:
+      openai-codex:
+        apiKeyEnv: CODEX_SNAPSHOT_TOKEN
+        transport: sse
+        models:
+          - id: gpt-6-astra
+            contextWindow: 272000
+
+- insert:
+    - id: codex-response-fixture
+      name: ./codex-response-fixture.mjs

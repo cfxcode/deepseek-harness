@@ -1,0 +1,10 @@
+version: 1
+scenario: codex-completed-over-catalog
+profile: headless
+composition: codex-completed-over-catalog
+recording: authored
+header:
+  class: codex-completed-over-catalog
+  pin: true
+environment:
+  CODEX_SNAPSHOT_TOKEN: fixture.eyJodHRwczovL2FwaS5vcGVuYWkuY29tL2F1dGgiOnsiY2hhdGdwdF9hY2NvdW50X2lkIjoiZml4dHVyZS1hY2NvdW50In19.signature

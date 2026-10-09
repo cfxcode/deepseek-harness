@@ -118,6 +118,8 @@ A route pi-ai does not ship needs `api`, `baseURL`, and a non-empty `models` lis
 
 Config updates strictly validate changed providers. Initial loading retains stored catalog failures as editable provider diagnostics; unchanged failed providers do not block edits elsewhere. Serviceable models remain selectable, and unresolved models fail before network I/O. Repairing or deleting the offending configuration clears its diagnostic.
 
+Completed Codex Responses remain successful when reported input usage exceeds the installed catalog's context capacity; this applies to both conversation and compaction requests. Explicit provider context-limit errors and zero-output length stops still report `CONTEXT_WINDOW_EXCEEDED`. Other protocols retain usage-based overflow detection. The catalog capacity continues to govern automatic compaction pressure.
+
 Changing `displayName`, `apiKeyEnv`, or `baseURL` without resolving the provider's model errors still rejects the save. For example, renaming an OpenRouter route whose model `111` needs an `api` cannot be saved on its own: repair or remove that model in the same editor draft, then save the complete provider configuration. Intermediate repairs remain in the draft until the whole provider validates; other providers can be saved independently.
 
 -----

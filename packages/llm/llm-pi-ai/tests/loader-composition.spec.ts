@@ -83,6 +83,57 @@ async function loadComposition(): Promise<{ ctx: Context; settingsPath: string }
 }
 
 describe('llm-pi-ai real dormant composition', () => {
+  it('keeps conversation and summary responses above the Codex catalog capacity', async () => {
+    const payload = Buffer.from(JSON.stringify({
+      'https://api.openai.com/auth': { chatgpt_account_id: 'fixture-account' },
+    })).toString('base64url')
+    vi.stubEnv('PI_COMPOSITION_KEY', `fixture.${payload}.signature`)
+    const item = {
+      type: 'message', id: 'msg_fixture', role: 'assistant', status: 'completed',
+      content: [{ type: 'output_text', text: 'Review complete.', annotations: [] }],
+    }
+    const events = [
+      JSON.stringify({ type: 'response.created', response: { id: 'resp_fixture' } }),
+      JSON.stringify({ type: 'response.output_item.added', output_index: 0, item: { ...item, content: [] } }),
+      JSON.stringify({ type: 'response.content_part.added', output_index: 0, content_index: 0, part: { type: 'output_text', text: '', annotations: [] } }),
+      JSON.stringify({ type: 'response.output_text.delta', output_index: 0, content_index: 0, delta: 'Review complete.' }),
+      JSON.stringify({ type: 'response.output_item.done', output_index: 0, item }),
+      JSON.stringify({ type: 'response.completed', response: {
+        id: 'resp_fixture', status: 'completed', output: [item],
+        usage: { input_tokens: 379929, output_tokens: 944, total_tokens: 380873, input_tokens_details: { cached_tokens: 379648 } },
+      } }),
+    ]
+    const server = await mockServer([{ events }, { events }])
+    const { ctx, settingsPath } = await loadComposition()
+    await writeFile(settingsPath, [
+      '- id: llm-pi-ai',
+      '  config:',
+      '    providers:',
+      '      openai-codex:',
+      '        apiKeyEnv: PI_COMPOSITION_KEY',
+      `        baseURL: ${server.url}`,
+      '        transport: sse',
+      '        models:',
+      '          - id: gpt-6-astra',
+      '            contextWindow: 272000',
+      '',
+    ].join('\n'))
+    await vi.waitFor(() => {
+      expect(ctx.llm.listProviders().map(provider => provider.id)).toEqual(['openai-codex'])
+    }, { timeout: 5000 })
+
+    for (const purpose of [undefined, 'compaction'] as const) {
+      const result = await assemble(ctx, {
+        provider: 'openai-codex', model: 'gpt-6-astra', messages: [],
+        ...purpose === undefined ? {} : { purpose },
+      })
+      expect(result.finish).toEqual({ kind: 'stop' })
+      expect(result.message.content).toEqual([{ type: 'text', text: 'Review complete.' }])
+      expect(result.usage).toEqual({ inputTokens: 281, outputTokens: 944, totalTokens: 380873, cacheReadTokens: 379648 })
+    }
+    expect(server.paths).toEqual(['/codex/responses', '/codex/responses'])
+  })
+
   it('boots with zero routes and registers one the moment settings supply a profile', async () => {
     vi.stubEnv('PI_COMPOSITION_KEY', '')
     const server = await mockServer([{ events: textEvents }])

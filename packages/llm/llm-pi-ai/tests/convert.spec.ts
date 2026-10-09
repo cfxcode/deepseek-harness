@@ -988,6 +988,31 @@ describe('mapStopReason / mapUsage', () => {
     })
   })
 
+  it('keeps completed Codex Responses successful above the catalog capacity', () => {
+    const completed = assistant({
+      api: 'openai-codex-responses',
+      provider: 'openai-codex',
+      model: 'gpt-6-astra',
+      content: [{ type: 'text', text: 'Review complete.' }],
+      usage: usage(281, 944, 379648),
+    })
+    expect(mapStopReason(completed, 272000)).toEqual({ kind: 'stop' })
+    expect(mapStopReason({ ...completed, provider: 'private-codex' }, 272000)).toEqual({ kind: 'stop' })
+  })
+
+  it('retains explicit Codex overflow errors and zero-output length detection', () => {
+    const codex = assistant({ api: 'openai-codex-responses', provider: 'openai-codex', model: 'gpt-6-astra' })
+    expect(mapStopReason({
+      ...codex,
+      stopReason: 'error',
+      errorMessage: 'Your input exceeds the context window of this model',
+    }, 272000)).toMatchObject({ kind: 'error', failure: { code: CONTEXT_WINDOW_EXCEEDED_CODE } })
+    expect(mapStopReason({ ...codex, stopReason: 'length', usage: usage(281, 0, 379648) }, 272000))
+      .toMatchObject({ kind: 'error', failure: { code: CONTEXT_WINDOW_EXCEEDED_CODE } })
+    expect(mapStopReason({ ...codex, usage: usage(281, 0, 379648) }, 272000))
+      .toMatchObject({ kind: 'error', failure: { code: EMPTY_RESPONSE_CODE } })
+  })
+
   it('maps cache fields only when nonzero', () => {
     expect(mapUsage(usage(10, 5, 8, 2))).toEqual({
       inputTokens: 10,
