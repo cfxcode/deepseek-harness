@@ -55,7 +55,7 @@ seam 的边缘与写入路径同一纪律。prompt 被拒是结果而非故障�
 
 `openai-codex` 回到提供方选择器与 Models 页目录。全部 38 个已安装提供方都提供登录入口：31 个经 pi-ai 自己的提示收取密钥，6 个在此之外还提供订阅登录，Codex 只提供订阅登录。
 
-尚未包含的是界面：把 notice 与 prompt 送到浏览器的 wire 契约，以及 Models 页上发起登录的控件。在那之前，flow 只能在进程内触达，部署方仍然通过在设置表单里输入密钥来配置。
+Models 页通过 settings controller 的 `codexLogin` namespace 暴露已注册的 `openai-codex` OAuth flow。调用方持有的流携带合并后的通知与问题；不透明的尝试标识和问题版本防止其他问题或过期问题接受答案。断开连接会撤回尝试。controller 描述授权元数据，并仅删除该提供方的授权，`llm-pi-ai` 仍是唯一的 token 格式适配器与写入方。提供方错误正文可能包含 token 文档，因此不会返回。其他提供方的 flow 仍只可在进程内触达；此界面不会导入其他应用的凭据。
 
 有两项限制记在包 README 里而非就地修复。一次尝试不可持久，登录途中刷新页面会丢弃它。登出即 `deleteRecord`，它只在本地遗忘而不通知签发方；需要服务端吊销的提供方无处声明这一点。
 
@@ -65,4 +65,4 @@ seam 自己的套件钉住它拥有的生命周期：单飞的拒绝与释放、
 
 `llm-pi-ai` 针对一份真实的 `$DSH_HOME` 文档覆盖三处翻译——逐字段的 api-key 凭据、连 refresh 半边一起原样保存的 OAuth 凭据、按 scope 跳过的他插件记录，以及没有凭据服务时的写入拒绝——外加每一个 `AuthEvent` 与 `AuthPrompt` 成员的重述；`Models.login()` 在集合边界处被 mock，因为真实登录会打开浏览器。两个真实组合测试分别在挂载与不挂载授权 seam 的情况下启动插件。
 
-`models-settings` 与 `onboarding-usable-provider` 两条 web e2e golden 恰好收回了被扣留时失去的那一行 `openai-codex` 选项——这是本决策记录的唯一装配后应用差异，因为 Models 页还没有可录制的登录控件。
+`codex-login` Web 场景运行已发布的 Loader 组合、真实 pi-ai OAuth 设备码流程及本地凭据写入方，仅替换 OpenAI HTTP 响应。它记录方式选择、设备码、已连接与失败视图，并检查取消、保留浏览器授权链接、刷新页面后持久化、按 scope 退出登录及错误脱敏。settings-controller 测试另行覆盖陈旧答案、单次尝试拒绝与释放生命周期。

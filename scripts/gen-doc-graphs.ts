@@ -288,6 +288,13 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Projects the user-settings seam onto the generated Remote namespace: the read is always redacted and every refusal is classified here, not on the seam Definition.',
   },
   {
+    key: 'codexLoginController',
+    pkg: 'api-settings-controller',
+    title: 'Host ChatGPT subscription login controller',
+    mode: 'core',
+    note: 'Carries caller-owned OAuth progress and answers over the generated Remote namespace; the authorization service owns the flow and credential persistence.',
+  },
+  {
     key: 'workspaceFiles',
     pkg: 'api-workspace-files',
     title: 'Host workspace file Remote service',

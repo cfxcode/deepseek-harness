@@ -1,0 +1,7 @@
+- dialog "登录 ChatGPT":
+  - heading "登录 ChatGPT" [level=2]
+  - button "关闭"
+  - paragraph: 使用你的 Codex 订阅对应的 ChatGPT 账号登录，无需填写 API 密钥
+  - alert: 未能完成登录，请检查网络后重试，或改用设备码登录
+  - button "重试"
+  - button "关闭"

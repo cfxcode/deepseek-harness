@@ -2,6 +2,26 @@
 
 /** English strings (the key-set source of truth for this pair). */
 export const en = {
+  codexSignIn: 'Sign in with ChatGPT',
+  codexSignOut: 'Sign out',
+  codexReconnect: 'Sign in again',
+  codexConnected: 'ChatGPT account connected',
+  codexDisconnected: 'ChatGPT account not connected',
+  codexDescription: 'Sign in with the ChatGPT account you use for Codex. No API key is required.',
+  codexChooseMethod: 'Choose a sign-in method',
+  codexDevice: 'Device code',
+  codexBrowser: 'Browser login',
+  codexDeviceHint: 'If browser login fails, use a device code. Enable device code authorization in your ChatGPT security settings first.',
+  codexOpenPage: 'Open authorization page',
+  codexContinue: 'Continue',
+  codexWaiting: 'Waiting for authorization…',
+  codexSuccess: 'ChatGPT login saved. You can now use openai-codex.',
+  codexCancelled: 'Sign-in cancelled.',
+  codexFailed: 'Could not complete sign-in. Check your connection and try again, or use a device code.',
+  codexUnavailable: 'ChatGPT login is unavailable in this deployment.',
+  codexKeyOverride: 'This provider is configured to use an API key, which takes precedence over account login. Remove that setting to use your ChatGPT account.',
+  codexAddHint: 'For a ChatGPT subscription, leave the API key blank and save this provider. Then choose Sign in with ChatGPT.',
+
   nav: 'Models',
   deepSeekAccount: 'DeepSeek Account',
   title: 'Models',
@@ -122,6 +142,26 @@ export type ModelsKey = keyof typeof en
 
 /** Chinese strings (same keys as {@link en}). */
 export const zh: { [Key in keyof typeof en]: string } = {
+  codexSignIn: '登录 ChatGPT',
+  codexSignOut: '退出登录',
+  codexReconnect: '重新登录',
+  codexConnected: '已连接 ChatGPT 账号',
+  codexDisconnected: '未连接 ChatGPT 账号',
+  codexDescription: '使用你的 Codex 订阅对应的 ChatGPT 账号登录，无需填写 API 密钥',
+  codexChooseMethod: '选择登录方式',
+  codexDevice: '设备码登录',
+  codexBrowser: '浏览器登录',
+  codexDeviceHint: '浏览器登录失败时，可以改用设备码登录。请先在 ChatGPT 的安全设置中开启设备码授权',
+  codexOpenPage: '打开授权页面',
+  codexContinue: '继续',
+  codexWaiting: '等待授权…',
+  codexSuccess: '已保存 ChatGPT 登录凭据，可以使用 openai-codex 了',
+  codexCancelled: '已取消登录',
+  codexFailed: '未能完成登录，请检查网络后重试，或改用设备码登录',
+  codexUnavailable: '当前部署未启用 ChatGPT 登录',
+  codexKeyOverride: '此提供商已配置 API 密钥，该配置优先于账号登录。请移除该设置后使用 ChatGPT 账号',
+  codexAddHint: '使用 ChatGPT 订阅时，API 密钥可以留空。保存提供商后，点击“登录 ChatGPT”',
+
   nav: '模型',
   deepSeekAccount: 'DeepSeek 账号',
   title: '模型',

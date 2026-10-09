@@ -21,7 +21,7 @@
  * post-apply reload.
  */
 
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Button, IconPlusOutlineRegular, Modal, SegmentedControl } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsRenderSlots } from '@deepseek-ai/dsh-client-ui-slots'
@@ -29,6 +29,7 @@ import type { SettingsNamespaceView } from '@deepseek-ai/dsh-api-remotes/client'
 // Type-only: pulls this package's SlotMap merge (the two Models child slots).
 import type {} from './slot-contract.ts'
 import { CustomProviderCard } from './CustomProviderCard.tsx'
+import { CodexLogin } from './CodexLogin.tsx'
 import { deriveKeyRef, protocolChoices, providerUsable } from './store.ts'
 import type { ModelsSettingsStore, ProviderRow } from './store.ts'
 import type { ModelsOperations } from './operations.ts'
@@ -234,6 +235,7 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
   const snapshot = injected.useSnapshot(value => value)
   const state = { ...snapshot, rows: snapshot.rows.map(row => row.entry.provider === 'deepseek-account'
     ? { ...row, entry: { ...row.entry, displayName: t('deepSeekAccount') } } : row) }
+  useEffect(() => () => { controller.dismissCodexLogin() }, [controller])
   const [editing, setEditing] = useState<EditorTarget | undefined>(undefined)
   const [addOpen, setAddOpen] = useState(false)
   const [addMode, setAddMode] = useState<AddMode>('catalog')
@@ -428,6 +430,9 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
           }
           const open = !addOpen && editing?.provider === row.entry.provider
           const credentialConfigured = row.credential?.configured === true
+            || (row.apiKeyEnv === undefined && row.codexLogin?.configured === true)
+          const credentialLabel = row.apiKeyEnv === undefined && row.codexLogin?.configured === true
+            ? t('codexConnected') : t('credentialConfigured')
           const credentialMissing = !credentialConfigured
             && row.apiKeyEnv !== undefined
             && row.credential?.configured === false
@@ -447,8 +452,8 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
                       <span
                         className={`${styles['credentialDot']} ${styles['credentialDotConfigured']}`}
                         role="img"
-                        aria-label={t('credentialConfigured')}
-                        title={t('credentialConfigured')}
+                        aria-label={credentialLabel}
+                        title={credentialLabel}
                       />
                     )
                     : credentialMissing
@@ -484,7 +489,7 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
                         type="button"
                         className={styles['dangerButton']}
                         aria-label={providerCopy(t('removeProvider'), target)}
-                        disabled={!state.writable}
+                        disabled={!state.writable || (row.entry.provider === 'openai-codex' && state.codexBusy === true)}
                         onClick={() => {
                           setSavedTarget(undefined)
                           setDeleteFailure(undefined)
@@ -498,6 +503,15 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
                 </span>
               </div>
               {error}
+              {row.entry.provider === 'openai-codex' && row.entry.settingsNs === 'llm-pi-ai'
+                ? <CodexLogin info={row.codexLogin} view={state.codexAttempt} busy={state.codexBusy === true}
+                  signingIn={state.codexSigningIn === true} failed={state.codexLoginError === true}
+                  keyOverride={row.apiKeyEnv !== undefined} t={t}
+                  onStart={() => { controller.startCodexLogin() }}
+                  onAnswer={value => controller.answerCodexLogin(value)}
+                  onClose={() => { controller.dismissCodexLogin() }}
+                  onSignOut={() => controller.signOutCodex()} />
+                : null}
               {renderSlot(
                 'settings.models.provider-card',
                 { provider: row.entry, configured: row.configured, keyConfigured: keyConfiguredOf(row) },
@@ -588,6 +602,9 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
                         ))}
                       </select>
                     </div>
+                    {draft.target.provider === 'openai-codex'
+                      ? <p className={styles['advancedHint']}>{t('codexAddHint')}</p>
+                      : null}
                     <ProviderEditor
                       key={draft.target.provider}
                       provider={draft.target.provider}

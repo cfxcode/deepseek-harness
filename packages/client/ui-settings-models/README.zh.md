@@ -37,6 +37,8 @@ kind: "package-reference"
 
 Host 配置 `credentialOnboarding` 默认为 `true`。Electron preload 标记会抑制自动凭证引导和 Web 欢迎须知；模型设置页与显式 API Key 编辑仍然可用。[账号插件](../ui-settings-account/README.zh.md#desktop-onboarding)负责 Desktop 引导。其他原生壳可以通过 `credentialOnboarding: false` 仅禁用凭证步骤。Host 通过 `webserver/index-inject` 发布这个公开的布尔值，Client 在注册弹窗前校验它。它是页面初始化数据，不是持久化的完成标记。
 
+使用 ChatGPT 订阅时，添加 `openai-codex`、将 API 密钥留空并保存，然后点击该行的**登录 ChatGPT**。弹窗提供浏览器与设备码登录，显示授权页面与设备码，关闭时取消登录。设备码登录需要先在 ChatGPT 安全设置中开启设备码授权。已保存的授权显示账号已连接；**退出登录**仅删除该授权。显式配置的 `apiKeyEnv` 仍优先于账号授权。
+
 ### API 密钥
 
 API 密钥输入框初始为空，并通过 `autocomplete="new-password"` 请求浏览器不要自动填入已保存的登录密码。

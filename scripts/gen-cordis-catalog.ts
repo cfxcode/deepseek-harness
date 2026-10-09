@@ -83,6 +83,7 @@ export const SERVICE_PAGE: Record<string, string> = {
   credentials: 'credentials.md',
   credentialsController: 'credentials.md',
   settingsController: 'settings.md',
+  codexLoginController: 'settings.md',
   directoryPicker: 'workspace.md',
   deepseekLlmApiExtensions: 'llm-streaming.md',
   dynamicCordisRunner: 'extensions.md',
@@ -276,6 +277,9 @@ export const EVENT_WALK_EXEMPTIONS: Record<string, string> = {
  * appear on more than one page.
  */
 export const LINK_MAP: Readonly<Record<string, string>> = {
+  CodexLoginAttemptId: 'settings.md',
+  CodexLoginInfo: 'settings.md',
+  CodexLoginView: 'settings.md',
   EventLogOptions: 'otel.md',
   EventLogReporter: 'otel.md',
   SessionLogOptions: 'otel.md',

@@ -9,7 +9,7 @@
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {
-  CredentialInfo, LlmConfigurableProvider, LlmProviderInfo, SettingsNamespaceView,
+  CodexLoginInfo, CodexLoginView, CredentialInfo, LlmConfigurableProvider, LlmProviderInfo, SettingsNamespaceView,
 } from '@deepseek-ai/dsh-api-remotes/client'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
@@ -71,6 +71,8 @@ export function joinProviderDirectory(
 
 /** One provider row the page renders. */
 export interface ProviderRow {
+  /** Stored ChatGPT grant metadata for the built-in Codex route. */
+  codexLogin?: CodexLoginInfo
   /** Account route has usable credentials for the configured inference origin. */
   accountAvailable?: boolean
   /** The directory entry (route id, display name, settings address, live state). */
@@ -94,6 +96,14 @@ export interface ProviderRow {
 
 /** Page snapshot. */
 export interface ModelsSettingsState {
+  /** Active or most recently completed ChatGPT login. */
+  codexAttempt?: CodexLoginView
+  /** A transport or storage failure, rendered with localized copy. */
+  codexLoginError?: boolean
+  /** Login or logout has not yet settled. */
+  codexBusy?: boolean
+  /** The login dialog is open while its stream is starting. */
+  codexSigningIn?: boolean
   status: 'idle' | 'loading' | 'ready' | 'error'
   /** Whole-load failure text; row-level write failures stay in the editor. */
   error: string | null
@@ -160,6 +170,96 @@ export class ModelsSettingsStore {
 
   /** Latest load wins; an older response never overwrites a newer one. */
   private generation = 0
+  private loginController: AbortController | undefined
+  private loginTask: Promise<void> | undefined
+  private disposed = false
+
+  /** Start one ChatGPT login; the page snapshot carries progress and prompts. */
+  startCodexLogin(): void {
+    if (this.loginTask !== undefined || this.disposed || this.store.getSnapshot().codexBusy) return
+    const controller = new AbortController()
+    this.loginController = controller
+    this.store.update((s) => { delete s.codexAttempt; s.codexBusy = true; s.codexSigningIn = true; s.codexLoginError = false })
+    const task = (async () => {
+      try {
+        for await (const view of this.ctx.remote.codexLogin.signIn(controller.signal)) {
+          if (this.disposed || controller.signal.aborted) break
+          this.store.update((s) => { s.codexAttempt = view })
+        }
+      } catch {
+        if (!this.disposed && !controller.signal.aborted) this.store.update((s) => { s.codexLoginError = true })
+      } finally {
+        if (this.loginController === controller) this.loginController = undefined
+        if (!this.disposed) {
+          this.store.update((s) => { s.codexBusy = false; s.codexSigningIn = false })
+          await this.load()
+        }
+      }
+    })()
+    this.loginTask = task
+    void task.finally(() => { if (this.loginTask === task) this.loginTask = undefined }).catch(() => {
+      if (!this.disposed) this.store.update((s) => { s.codexLoginError = true })
+    })
+  }
+
+  /**
+   * Submit the current login answer and forget it locally immediately.
+   * @param value - selected method or typed callback answer.
+   * @returns once the host accepts or refuses the answer; failures stay on the page.
+   */
+  async answerCodexLogin(value: string): Promise<void> {
+    const view = this.store.getSnapshot().codexAttempt
+    if (view?.prompt === undefined || view.status !== 'running') return
+    this.store.update((s) => { s.codexLoginError = false })
+    try {
+      const result = await this.ctx.remote.codexLogin.respond(view.id, view.revision, value)
+      if (!result.ok) this.store.update((s) => { if (s.codexAttempt?.id === view.id) s.codexLoginError = true })
+      else this.store.update((s) => {
+        if (s.codexAttempt?.id === view.id && s.codexAttempt.revision === view.revision) {
+          const { prompt: _prompt, ...rest } = s.codexAttempt
+          s.codexAttempt = rest
+        }
+      })
+    } catch {
+      this.store.update((s) => { if (s.codexAttempt?.id === view.id) s.codexLoginError = true })
+    }
+  }
+
+  /** Withdraw login when its dialog closes; keep the prior stored grant. */
+  cancelCodexLogin(): void { this.loginController?.abort() }
+
+  /** Dismiss the most recent login result after any active attempt is withdrawn. */
+  dismissCodexLogin(): void {
+    this.cancelCodexLogin()
+    this.store.update((s) => { delete s.codexAttempt; s.codexSigningIn = false; s.codexLoginError = false })
+  }
+
+  /**
+   * Remove only the Codex grant and refresh the page; failures remain visible.
+   * @returns after storage and refresh have settled.
+   */
+  async signOutCodex(): Promise<void> {
+    if (this.store.getSnapshot().codexBusy) return
+    this.store.update((s) => { s.codexBusy = true; s.codexLoginError = false; delete s.codexAttempt })
+    try {
+      const result = await this.ctx.remote.codexLogin.signOut()
+      if (!result.ok) this.store.update((s) => { s.codexLoginError = true })
+      await this.load()
+    } catch {
+      this.store.update((s) => { s.codexLoginError = true })
+    } finally { this.store.update((s) => { s.codexBusy = false }) }
+  }
+
+  /**
+   * Withdraw the login stream when the plugin leaves.
+   * @returns after the stream has settled.
+   */
+  async dispose(): Promise<void> {
+    this.disposed = true
+    this.generation++
+    this.cancelCodexLogin()
+    await this.loginTask?.catch(() => undefined)
+  }
 
   /**
    * @param ctx - the page plugin's context, whose `remote.llm` and
@@ -182,6 +282,7 @@ export class ModelsSettingsStore {
    * @returns nothing; the snapshot carries the outcome.
    */
   async load(): Promise<void> {
+    if (this.disposed) return
     const generation = ++this.generation
     this.store.update((s) => { s.status = 'loading'; s.error = null })
     const [registered, declared] = await Promise.all([
@@ -222,6 +323,13 @@ export class ModelsSettingsStore {
         if (row.entry.provider === 'deepseek-account') row.accountAvailable = catalog.ok
           && catalog.value.groups.some(group => group.id === 'deepseek-account' && group.models.length > 0)
       }
+    }
+    if (generation !== this.generation) return
+    const codex = rows.find(row => row.entry.provider === 'openai-codex' && row.entry.settingsNs === 'llm-pi-ai')
+    if (codex?.configured !== true && this.loginController !== undefined) this.dismissCodexLogin()
+    if (codex !== undefined) {
+      const login = await this.ctx.remote.codexLogin.describe()
+      if (login.ok) codex.codexLogin = login.value
     }
     const refs = [...new Set(rows.filter(row => row.entry.provider !== 'deepseek-account').map(row => row.apiKeyEnv ?? deriveKeyRef(row.entry.provider)))]
     let credentials: Record<string, CredentialInfo> = {}
@@ -277,6 +385,7 @@ export class ModelsSettingsStore {
 export function providerUsable(row: ProviderRow): boolean {
   if (!row.entry.active) return false
   if (row.entry.provider === 'deepseek-account') return row.accountAvailable === true
+  if (row.entry.provider === 'openai-codex' && row.apiKeyEnv === undefined) return row.codexLogin?.configured === true
   if (row.apiKeyEnv === undefined) return true
   return row.credential?.configured === true
 }

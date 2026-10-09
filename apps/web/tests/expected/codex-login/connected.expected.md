@@ -1,0 +1,22 @@
+- dialog "设置":
+  - navigation:
+    - text: 设置
+    - button "通用设置"
+    - button "模型"
+    - button "内置插件"
+    - button "Agent 预设"
+  - button "打开配置文件"
+  - button "关闭"
+  - heading "模型" [level=2]
+  - paragraph: 填入各提供商的 API 密钥即可使用其模型。
+  - status: 已保存 openai-codex。
+  - list:
+    - listitem:
+      - text: openai-codex
+      - img "已连接 ChatGPT 账号"
+      - button "编辑 openai-codex": 编辑
+      - button "删除 openai-codex": 删除
+      - text: 已连接 ChatGPT 账号
+      - button "重新登录"
+      - button "退出登录"
+  - button "添加模型提供商"

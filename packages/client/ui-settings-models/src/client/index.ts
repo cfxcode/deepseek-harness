@@ -65,7 +65,7 @@ export function refreshIfLoaded(controller: ModelsSettingsStore): void {
  * constrained; registration depends on each slot through `slots.inject()`.
  */
 export const inject = [
-  'slots', 'locale', 'remote', 'remote.credentials', 'remote.llm', 'remote.settings', 'remote.session',
+  'slots', 'locale', 'remote', 'remote.credentials', 'remote.llm', 'remote.settings', 'remote.session', 'remote.codexLogin',
   'configForms', 'settingsSchema',
 ]
 
@@ -132,6 +132,7 @@ export function apply(ctx: ClientContext): void {
     return () => {
       welcomeController.dispose()
       for (const dispose of disposers) dispose()
+      return controller.dispose()
     }
   }, 'ui-settings-models: pushed invalidations')
 

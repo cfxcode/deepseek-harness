@@ -37,6 +37,8 @@ A provider with a stored catalog error remains visible with its diagnostic and e
 
 Host configuration `credentialOnboarding` defaults to `true`. The Electron preload marker suppresses automatic credential onboarding and the Web welcome notice; Models settings and explicit API-key editing remain available. The [account plugin](../ui-settings-account/README.md#desktop-onboarding) owns the Desktop introduction. Other native shells can disable only the credential step with `credentialOnboarding: false`. Host publishes this public boolean through `webserver/index-inject`, and Client validates it before registering dialogs. It is page initialization data, not a durable completion marker.
 
+For a ChatGPT subscription, add `openai-codex` with a blank API key, save it, then choose **Sign in with ChatGPT** on its row. The dialog offers browser and device-code login, displays the authorization page and code, and cancels when closed. Device-code login requires enabling device-code authorization in ChatGPT security settings. A saved grant shows an account-connected status; **Sign out** removes only that grant. An explicit `apiKeyEnv` still takes precedence over the account grant.
+
 ### API keys
 
 API-key inputs start empty and use `autocomplete="new-password"` to ask browsers not to autofill saved login passwords.

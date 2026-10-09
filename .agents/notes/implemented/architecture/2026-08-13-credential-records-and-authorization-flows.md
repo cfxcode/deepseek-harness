@@ -55,7 +55,7 @@ Withdrawal settles an attempt whether or not its flow reacts to the signal. A fl
 
 `openai-codex` returns to the provider picker and to the Models page directory. All 38 installed providers offer sign-in: 31 collect a key through pi-ai's own prompt, six offer that beside a subscription login, and Codex offers only the subscription login.
 
-What this does not yet include is the surface: the wire contract that carries notices and prompts to the browser, and the Models-page control that starts a login. Until that lands, the flows are reachable only in-process, and a deployment still configures a key by typing it into the settings form.
+The Models page now exposes the registered `openai-codex` OAuth flow through the settings controller’s `codexLogin` namespace. A caller-owned stream carries coalesced notices and prompts; an opaque attempt id and prompt revision prevent another or expired question from accepting an answer. Disconnect withdraws the attempt. The controller describes grant metadata and forgets only this provider’s grant, while `llm-pi-ai` remains the only token-format adapter and writer. Provider failure bodies are withheld because they can include token documents. Other providers’ flows remain in-process; this UI does not import another application’s credentials.
 
 Two limits are recorded in the package READMEs rather than fixed. An attempt is not durable, so reloading the page mid-login abandons it. And signing out is `deleteRecord`, which forgets the record locally without telling the issuer; a provider needing a server-side revoke has nowhere to declare it.
 
@@ -65,4 +65,4 @@ The seam's suite pins the lifecycle it owns: single-flight refusal and release, 
 
 `llm-pi-ai` covers the three translations against a real `$DSH_HOME` document — an api-key credential field by field, an OAuth credential verbatim including its refresh half, a foreign plugin's record skipped by scope, and the write refusal without a credentials service — plus every `AuthEvent` and `AuthPrompt` member restated, with `Models.login()` mocked at the collection boundary since a real one opens a browser. Two real-composition tests boot the plugin with and without the authorization seam.
 
-The `models-settings` and `onboarding-usable-provider` web e2e goldens regain exactly the `openai-codex` option line they lost when it was withheld — the only assembled-application difference this decision records, because the Models page has no login control yet to record.
+The `codex-login` Web scenario runs the shipped Loader composition, real pi-ai OAuth device flow and local credential writer while replacing only OpenAI HTTP responses. It records method, device, connected and failure views, and checks cancellation, browser-link retention, persistence after reload, scoped logout and redacted failures. The settings-controller suite separately checks stale answers, single-flight refusal and disposal.

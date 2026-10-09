@@ -1,0 +1,9 @@
+- dialog "登录 ChatGPT":
+  - heading "登录 ChatGPT" [level=2]
+  - button "关闭"
+  - paragraph: 使用你的 Codex 订阅对应的 ChatGPT 账号登录，无需填写 API 密钥
+  - status: Enter this code on the verification page to finish signing in.
+  - code: ABCD-EFGH
+  - link "打开授权页面":
+    - /url: https://auth.openai.com/codex/device
+  - button "取消"

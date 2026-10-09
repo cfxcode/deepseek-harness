@@ -22,6 +22,47 @@
 
 Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — the language sides differ only in locale-specific paired document paths. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.zh.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
 
+<a id="ctxcodexlogincontroller--codexlogincontroller"></a>
+
+### `ctx.codexLoginController` — `CodexLoginController`
+
+Interactive login for the exact record consumed by the built-in openai-codex provider.
+
+```ts cordis-catalog
+/**
+ * Describe login capability and stored-grant metadata without reading token values.
+ * @returns availability, record presence and writability.
+ */
+@Remote async describe(): Promise<CodexLoginInfo>
+
+/**
+ * Run OAuth and deliver prompts only to the initiating caller.
+ * @param signal - disconnect or caller cancellation withdraws the attempt.
+ * @returns coalesced progress, prompt and terminal views, never credential payloads.
+ * @throws RemoteError when OAuth is unavailable, read-only or already running.
+ */
+@Remote({ mode: 'stream' }) async *signIn(signal: AbortSignal): AsyncIterable<CodexLoginView>
+
+/**
+ * Answer only the current question of an owned attempt; stale answers are rejected.
+ * @param id - opaque identifier delivered by signIn.
+ * @param revision - question revision delivered with the prompt.
+ * @param value - selected option id or typed answer; not retained after submission.
+ * @returns once the answer is delivered to the OAuth flow.
+ * @throws RemoteError for expired attempts or invalid answers.
+ */
+@Remote respond(id: CodexLoginAttemptId, revision: number, value: string): void
+
+/**
+ * Forget this provider's grant; other credentials and provider settings are kept.
+ * @returns once the stored grant has been removed.
+ * @throws RemoteError when login is active, storage is absent or deletion fails.
+ */
+@Remote async signOut(): Promise<void>
+```
+
+Source: [`packages/api/settings-controller/src/codex-login.ts`](../../packages/api/settings-controller/src/codex-login.ts)
+
 <a id="ctxsettings--settingsforms"></a>
 
 ### `ctx.settings` — `SettingsForms`

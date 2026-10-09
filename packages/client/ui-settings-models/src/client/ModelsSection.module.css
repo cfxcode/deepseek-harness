@@ -722,3 +722,34 @@ select.input {
   line-height: 20px;
   text-align: center;
 }
+.codexLogin {
+  padding: 12px 0;
+  font-size: 13px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.codexContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+
+.codexContent form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.codexContent a {
+  color: var(--dsw-alias-brand-primary);
+}
+
+.codexCode {
+  align-self: flex-start;
+  padding: 12px;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-xs);
+  font-size: 13px;
+  user-select: all;
+}

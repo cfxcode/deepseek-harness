@@ -637,6 +637,40 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'codexLoginController',
+    summary: 'Interactive login for the exact record consumed by the built-in openai-codex provider.',
+    description: 'Interactive login for the exact record consumed by the built-in openai-codex provider.',
+    methods: [
+      {
+        signature: '@Remote async describe(): Promise<CodexLoginInfo>',
+        description: 'Describe login capability and stored-grant metadata without reading token values.',
+        parameters: [],
+        returns: 'availability, record presence and writability.',
+      },
+      {
+        signature: '@Remote({ mode: \'stream\' }) async *signIn(signal: AbortSignal): AsyncIterable<CodexLoginView>',
+        description: 'Run OAuth and deliver prompts only to the initiating caller.',
+        parameters: [{ name: 'signal', description: 'disconnect or caller cancellation withdraws the attempt.' }],
+        returns: 'coalesced progress, prompt and terminal views, never credential payloads.',
+        throws: ['RemoteError when OAuth is unavailable, read-only or already running.'],
+      },
+      {
+        signature: '@Remote respond(id: CodexLoginAttemptId, revision: number, value: string): void',
+        description: 'Answer only the current question of an owned attempt; stale answers are rejected.',
+        parameters: [{ name: 'id', description: 'opaque identifier delivered by signIn.' }, { name: 'revision', description: 'question revision delivered with the prompt.' }, { name: 'value', description: 'selected option id or typed answer; not retained after submission.' }],
+        returns: 'once the answer is delivered to the OAuth flow.',
+        throws: ['RemoteError for expired attempts or invalid answers.'],
+      },
+      {
+        signature: '@Remote async signOut(): Promise<void>',
+        description: 'Forget this provider\'s grant; other credentials and provider settings are kept.',
+        parameters: [],
+        returns: 'once the stored grant has been removed.',
+        throws: ['RemoteError when login is active, storage is absent or deletion fails.'],
+      },
+    ],
+  },
+  {
     key: 'commands',
     summary: 'Human-command registry.',
     description: 'Human-command registry. Plain-context definitions are global; definitions registered through a command-injected child of an agent context shadow globals for that agent.',
@@ -4759,6 +4793,18 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ClientArtifactBaseline',
     declaration: 'export interface ClientArtifactBaseline {\n    readonly path: string;\n    readonly mtimeMs: number;\n    readonly ctimeMs: number;\n    readonly size: number;\n}',
+  },
+  {
+    name: 'CodexLoginAttemptId',
+    declaration: 'export type CodexLoginAttemptId = Branded<\'CodexLoginAttemptId\'>;',
+  },
+  {
+    name: 'CodexLoginInfo',
+    declaration: 'export interface CodexLoginInfo {\n    readonly available: boolean;\n    readonly configured: boolean;\n    readonly writable: boolean;\n    readonly inFlight: boolean;\n}',
+  },
+  {
+    name: 'CodexLoginView',
+    declaration: 'export interface CodexLoginView {\n    readonly id: CodexLoginAttemptId;\n    readonly status: \'running\' | \'authorized\' | \'cancelled\' | \'failed\';\n    readonly revision: number;\n    readonly notice?: {\n        readonly message: string;\n        readonly url?: string;\n        readonly code?: string;\n    };\n    readonly prompt?: {\n        readonly kind: \'text\' | \'secret\' | \'select\';\n        readonly message: string;\n        readonly placeholder?: string;\n        readonly options?: readonly {\n            readonly id: string;\n            readonly label: string;\n        }[];\n    };\n}',
   },
   {
     name: 'CollectedOutput',
